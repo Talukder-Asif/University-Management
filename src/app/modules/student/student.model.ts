@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import { Guardian, LocalGuardian, Student, UserName } from './student.interface';
+import { Guardian, LocalGuardian, TStudent, UserName } from './student.interface';
 
 
 const userNameSchema = new Schema<UserName>({
@@ -62,8 +62,14 @@ const localGuradianSchema = new Schema<LocalGuardian>({
   },
 });
 
-const studentSchema = new Schema<Student>({
+const studentSchema = new Schema<TStudent>({
   id: { type: String },
+  user:{
+    type: Schema.Types.ObjectId,
+    required: [true, 'User is required'],
+    unique: true,
+    ref: 'User',
+  },
   name: userNameSchema,
   gender: ['male', 'female'],
   dateOfBirth: { type: String },
@@ -76,7 +82,6 @@ const studentSchema = new Schema<Student>({
   guardian: guardianSchema,
   localGuardian: localGuradianSchema,
   profileImg: { type: String },
-  isActive: ['active', 'blocked'],
 });
 
-export const StudentModel = model<Student>('Student', studentSchema);
+export const StudentModel = model<TStudent>('Student', studentSchema);
