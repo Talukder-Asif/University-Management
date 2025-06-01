@@ -1,28 +1,24 @@
 import { TUser } from './user.interface';
-import { Request, Response } from "express";
-import { UserService } from "./user.service";
-import { userValidation } from "./user.validation";
+import { UserService } from './user.service';
+import sendResponse from '../../utils/sendResponse';
+import status from 'http-status';
+import catchAsync from '../../utils/CatchAsync';
 
+// use RequestHandler from express to define the type for the request handler
+const createStudent = catchAsync(async (req, res) => {
+	const { password, student } = req.body;
+	// const zodParsedData =  userValidation?.userValidationSchema.parse(student);
 
-const createStudent = async (req: Request, res: Response) => {
-    try{
+	const result = await UserService.createStudentIntoDB(password, student);
 
-        const {password ,student} = req.body;
-        // const zodParsedData =  userValidation?.userValidationSchema.parse(student);
-        
-        const result = await UserService.createStudentIntoDB(password, student);
-        res.status(200).json({
-            success: true,
-            message: 'Student is Created successfully',
-            data: result,
-        });
-
-    }catch(err){
-        console.log(err)
-    }
-}
-
+	sendResponse(res, {
+		statusCode: status.OK,
+		success: true,
+		message: 'Student is Created successfully',
+		data: result as TUser,
+	});
+});
 
 export const UserControllers = {
-    createStudent
+	createStudent,
 };

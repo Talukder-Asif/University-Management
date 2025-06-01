@@ -12,6 +12,11 @@ const userSchema = new Schema<TUser>({
         type: String,
         required: true
     },
+    email:{
+        type: String,
+        required: true,
+        unique: true,
+    },
     needsChangePassword: {
         type: Boolean,
         default: true
@@ -36,12 +41,19 @@ const userSchema = new Schema<TUser>({
 })
 
 userSchema.pre('save', async function (next) {
-    const user = this;
-    user.password = await bcrypt.hash(
-        user.password,
-        Number(config.salt_rounds)
-    )
-})
+  const user = this as any;
+
+  if (!user.isModified('password')) return next();
+
+  try {
+    const salt = await bcrypt.genSalt(Number(config.salt_rounds));
+    user.password = await bcrypt.hash(user.password, salt);
+    next();
+  } catch (err) {
+    next(err as Error);
+  }
+});
+
 
 const UserModel = model<TUser>('User', userSchema);
 export default UserModel;
