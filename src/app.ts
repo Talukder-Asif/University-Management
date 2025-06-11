@@ -1,6 +1,6 @@
 import cors from 'cors';
-import express, { Application,  Request, Response } from 'express';
-import globalErrorHandler from './app/Middleware/GlobalErrorhankler';
+import express, { Application, Request, Response } from 'express';
+import globalErrorHandler from './app/Middleware/globalErrorHandler';
 import NotFound from './app/Middleware/NotFound';
 import router from './app/Router';
 
@@ -14,8 +14,8 @@ app.use(cors());
 app.use('/api/v1', router);
 
 const getAController = (req: Request, res: Response) => {
-  const a = 10;
-  res.status(200).send({ value: a });
+	const a = 10;
+	res.status(200).send({ value: a });
 };
 
 app.get('/', getAController);
