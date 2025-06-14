@@ -1,44 +1,47 @@
-import { userValidation } from './user.validation';
-import config from "../../config";
-import { TStudent } from "../student/student.interface";
-import { TUser } from "./user.interface";
-import UserModel from "./user.model";
+import config from '../../config';
+import { TStudent } from '../student/student.interface';
+import { TUser } from './user.interface';
+import User from './user.model';
 import { StudentModel } from '../student/student.model';
+import { AcademicSemester } from '../AcademicSemester/academicSemester.model';
+import { generateStudentID } from './user.utils';
 
+const createStudentIntoDB = async (password: string, payload: TStudent) => {
+	// Create a user
+	const userData: Partial<TUser> = {};
 
-const createStudentIntoDB = async (password: string ,studentData : TStudent)=>{
+	// if password is not given then use default password
+	userData.password = password || (config.default_password as string);
 
-    // Create a user 
-    const userData : Partial<TUser> = {}
+	// Set student role
+	userData.role = 'student';
+	userData.email = payload.email;
 
-    // if password is not given then use default password
-    userData.password = password || (config.default_password as string);
+	const admissionSemester = await AcademicSemester.findById(
+		payload.admissionSemester,
+	);
 
-    // Set student role
-    userData.role = 'student';
-    userData.email = studentData.email;
+	if (!admissionSemester) {
+		throw new Error('Invalid semester ID provided');
+	}
 
+	userData.id = await generateStudentID(admissionSemester);
 
-    // Manually Generated ID
-    userData.id = '20230010001'
+	// create a user model
+	const result = await User.create(userData);
 
-    // create a user model 
-    const result = await UserModel.create(userData);
+	// Create a Student
+	if (Object.keys(result).length) {
+		payload.id = result.id;
+		payload.user = result._id;
 
+		const newStudent = await StudentModel.create(payload);
+		return newStudent;
+	}
 
-    // Create a Student
-    if(Object.keys(result).length){
-        studentData.id = result.id;
-        studentData.user = result._id
-
-        const newStudent = await StudentModel.create(studentData);
-        return newStudent;
-    }
-
-    return result;
-}
-
+	return result;
+};
 
 export const UserService = {
-    createStudentIntoDB
-}
+	createStudentIntoDB,
+};
