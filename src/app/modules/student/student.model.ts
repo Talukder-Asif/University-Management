@@ -1,10 +1,11 @@
-import { Schema, model } from 'mongoose';
+import { CallbackError, Schema, model } from 'mongoose';
 import {
 	Guardian,
 	LocalGuardian,
 	TStudent,
 	UserName,
 } from './student.interface';
+import AppError from '../../errors/AppError';
 
 const userNameSchema = new Schema<UserName>({
 	firstName: {
@@ -117,6 +118,21 @@ studentSchema.pre('find', function (next) {
 studentSchema.pre('findOne', function (next) {
 	this.find({ isDeleted: { $ne: true } });
 	next();
+});
+
+studentSchema.pre('findOneAndUpdate', async function (next) {
+	try {
+		const query = this.getQuery();
+
+		const student = await this.model.findOne(query);
+		if (!student) {
+			throw new AppError(404, 'Student does not exist');
+		}
+
+		next();
+	} catch (error) {
+		next(error as CallbackError);
+	}
 });
 
 export const StudentModel = model<TStudent>('Student', studentSchema);

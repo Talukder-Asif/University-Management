@@ -4,7 +4,10 @@ import { TUser } from './user.interface';
 import User from './user.model';
 import { StudentModel } from '../student/student.model';
 import { AcademicSemester } from '../AcademicSemester/academicSemester.model';
-import { generateStudentID } from './user.utils';
+import { generateStudentId } from './user.utils';
+import AppError from '../../errors/AppError';
+import mongoose from 'mongoose';
+import status from 'http-status';
 
 const createStudentIntoDB = async (password: string, payload: TStudent) => {
 	// Create a user
@@ -22,24 +25,43 @@ const createStudentIntoDB = async (password: string, payload: TStudent) => {
 	);
 
 	if (!admissionSemester) {
-		throw new Error('Invalid semester ID provided');
+		throw new AppError(404, 'Invalid semester ID provided');
 	}
 
-	userData.id = await generateStudentID(admissionSemester);
+	// Create a session for transaction
+	const session = await mongoose.startSession();
 
-	// create a user model
-	const result = await User.create(userData);
+	try {
+		// Start a session
+		session.startTransaction();
 
-	// Create a Student
-	if (Object.keys(result).length) {
-		payload.id = result.id;
-		payload.user = result._id;
+		userData.id = await generateStudentId(admissionSemester);
 
-		const newStudent = await StudentModel.create(payload);
+		// create a user model(Transection 1)
+		const newUser = await User.create([userData], { session });
+
+		// Create a Student
+		if (!newUser.length) {
+			throw new AppError(status.BAD_REQUEST, 'Failed to create user');
+		}
+		payload.id = newUser[0].id;
+		payload.user = newUser[0]._id;
+
+		// Create a student model(Transection 2)
+		const newStudent = await StudentModel.create([payload], { session });
+		if (!newStudent.length) {
+			throw new AppError(status.BAD_REQUEST, 'Failed to create student');
+		}
+
+		// Commit the transaction
+		await session.commitTransaction();
+		session.endSession();
+
 		return newStudent;
+	} catch (error) {
+		await session.abortTransaction();
+		session.endSession();
 	}
-
-	return result;
 };
 
 export const UserService = {

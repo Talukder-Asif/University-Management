@@ -1,3 +1,4 @@
+import AppError from '../../errors/AppError';
 import { academicSemesterNameCodeMapper } from './academicSemester.constant';
 import { TAcademicSemester } from './academicSemester.interface';
 import { AcademicSemester } from './academicSemester.model';
@@ -6,7 +7,8 @@ const createAcademicSemesterIntoDB = async (payLoad: TAcademicSemester) => {
 	// Check if the academic semester name and code match
 
 	if (academicSemesterNameCodeMapper[payLoad.name] !== payLoad.code) {
-		throw new Error(
+		throw new AppError(
+			404,
 			`Academic Semester name ${payLoad.name} does not match with code ${payLoad.code}.`,
 		);
 	}
@@ -31,7 +33,8 @@ const updateAcademicSemesterIntoDB = async (
 	payLoad: TAcademicSemester,
 ) => {
 	if (academicSemesterNameCodeMapper[payLoad.name] !== payLoad.code) {
-		throw new Error(
+		throw new AppError(
+			404,
 			`Academic Semester name ${payLoad.name} does not match with code ${payLoad.code}.`,
 		);
 	}
