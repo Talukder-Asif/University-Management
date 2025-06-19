@@ -15,7 +15,7 @@ const createStudent = catchAsync(async (req, res) => {
 		statusCode: status.OK,
 		success: true,
 		message: 'Student is Created successfully',
-		data: result as TUser,
+		data: result as unknown as TUser,
 	});
 });
 

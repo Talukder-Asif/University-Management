@@ -5,11 +5,41 @@ import status from 'http-status';
 import User from '../user/user.model';
 import { TStudent } from './student.interface';
 
-const getAllStudentsFromDB = async () => {
-	const result = await StudentModel.find();
-	return result;
-};
+const getAllStudentsFromDB = async (query: Record<string, unknown>) => {
+	let searchTerm = '';
+	if (query?.searchTerm) {
+		searchTerm = query?.searchTerm as string;
+	}
+	const studentSearchableFields = ['email', 'name.firstName', 'presentAddress'];
 
+	const searchQuery = StudentModel.find({
+		$or: studentSearchableFields.map((field) => ({
+			[field]: { $regex: searchTerm, $options: 'i' },
+		})),
+	});
+
+	// Make a clear query for filtering
+	const queryObj = { ...query };
+	const excludedFields = ['searchTerm', 'sort', 'limit'];
+	excludedFields.forEach((el) => delete queryObj[el]);
+
+	const filterQuery = searchQuery.find(queryObj);
+
+	let sort = '-createdAt';
+	if (query.sort) {
+		sort = query.sort as string;
+	}
+
+	const sortQuery = filterQuery.sort(sort);
+
+	let limit = 9;
+	if (query.limit) {
+		limit = Number(query.limit);
+	}
+	const limitQuery = await sortQuery.limit(limit);
+
+	return limitQuery;
+};
 const getSingleStudentFromDB = async (id: string) => {
 	const result = await StudentModel.findOne({ id });
 	if (!result) {
@@ -32,8 +62,8 @@ const updateStudentIntoDB = async (id: string, payload: Partial<TStudent>) => {
   
 	  guardian.fatherOccupation = Teacher
   
-	  name.firstName = 'Mezba'
-	  name.lastName = 'Abedin'
+	  name.firstName = 'Asif'
+	  name.lastName = 'Talukder'
 	*/
 
 	if (name && Object.keys(name).length) {

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import config from '../../config';
 import { TStudent } from '../student/student.interface';
 import { TUser } from './user.interface';
@@ -58,9 +60,10 @@ const createStudentIntoDB = async (password: string, payload: TStudent) => {
 		session.endSession();
 
 		return newStudent;
-	} catch (error) {
+	} catch (error: any) {
 		await session.abortTransaction();
 		session.endSession();
+		throw new Error(error);
 	}
 };
 
