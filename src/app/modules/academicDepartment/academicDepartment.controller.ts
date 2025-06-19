@@ -1,4 +1,6 @@
+import status from 'http-status';
 import catchAsync from '../../utils/CatchAsync';
+import sendResponse from '../../utils/sendResponse';
 import { AcademicDepartmentService } from './academicDepartment.service';
 
 const createAcademicDepartment = catchAsync(async (req, res) => {
@@ -26,7 +28,9 @@ const getSingleAcademicDepartment = catchAsync(async (req, res) => {
 	const { id } = req.params;
 	const result =
 		await AcademicDepartmentService.getSingleAcademicDepartmentFromDB(id);
-	return res.status(200).json({
+
+	sendResponse(res, {
+		statusCode: status.OK,
 		success: true,
 		message: 'Academic Department retrieved successfully',
 		data: result,
