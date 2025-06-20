@@ -1,6 +1,7 @@
 // year semesterCode 4digit number
 
 import { TAcademicSemester } from '../AcademicSemester/academicSemester.interface';
+import { Admin } from '../admin/admin.model';
 import { Faculty } from '../faculty/faculty.model';
 import User from './user.model';
 
@@ -75,4 +76,29 @@ export const generateFacultyID = async () => {
 	const incrementId = (Number(currentId) + 1).toString().padStart(4, '0');
 
 	return `F-${incrementId}`;
+};
+const findLastAdmin = async () => {
+	const lastAdmin = await Admin.findOne(
+		{
+			role: 'admin',
+		},
+		{
+			id: 1,
+			_id: 0,
+		},
+	)
+		.sort({
+			createdAt: -1,
+		})
+		.lean();
+
+	return lastAdmin?.id || undefined;
+};
+export const generateAdminID = async () => {
+	const lastAdminID = await findLastAdmin();
+	const currentId: string | undefined =
+		lastAdminID?.substring(2) || '0000'.toString();
+	const incrementAdminId = (Number(currentId) + 1).toString().padStart(4, '0');
+
+	return `A-${incrementAdminId}`;
 };

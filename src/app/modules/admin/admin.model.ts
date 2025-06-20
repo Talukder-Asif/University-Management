@@ -1,8 +1,10 @@
 import { CallbackError, model, Schema } from 'mongoose';
-import { TFaculty } from './faculty.interface';
+import { TAdmin } from './admin.interface';
 import AppError from '../../errors/AppError';
+import config from '../../config';
+import bcrypt from 'bcrypt';
 
-const FacultySchema = new Schema<TFaculty>(
+const AdminSchema = new Schema<TAdmin>(
 	{
 		id: {
 			type: String,
@@ -13,6 +15,14 @@ const FacultySchema = new Schema<TFaculty>(
 			type: Schema.Types.ObjectId,
 			ref: 'User',
 			required: true,
+		},
+		password: {
+			type: String,
+			required: true,
+		},
+		needsPasswordChange: {
+			type: Boolean,
+			default: true,
 		},
 		role: {
 			type: String,
@@ -60,14 +70,9 @@ const FacultySchema = new Schema<TFaculty>(
 		profileImage: {
 			type: String,
 		},
-		academicDepartment: {
+		managementDepartment: {
 			type: Schema.Types.ObjectId,
-			ref: 'AcademicDepartment',
-			required: true,
-		},
-		academicFaculty: {
-			type: Schema.Types.ObjectId,
-			ref: 'AcademicFaculty',
+			ref: 'ManagementDepartment',
 			required: true,
 		},
 		isDeleted: {
@@ -80,29 +85,42 @@ const FacultySchema = new Schema<TFaculty>(
 	},
 );
 
-// Middleware to show only available faculties
-FacultySchema.pre('find', function (next) {
+AdminSchema.pre('find', function (next) {
 	this.find({ isDeleted: { $ne: true } });
 	next();
 });
 
-FacultySchema.pre('findOne', function (next) {
+AdminSchema.pre('findOne', function (next) {
 	this.findOne({ isDeleted: { $ne: true } });
 	next();
 });
-FacultySchema.pre('findOneAndUpdate', async function (next) {
+
+AdminSchema.pre('findOneAndUpdate', async function (next) {
 	try {
 		const query = this.getQuery();
 
-		const faculty = await this.model.findOne(query);
-		if (!faculty) {
-			throw new AppError(404, 'Faculty does not exist');
+		const admin = await this.findOne(query);
+		if (!admin) {
+			throw new AppError(404, 'Admin does not exist');
 		}
-
 		next();
-	} catch (error) {
-		next(error as CallbackError);
+	} catch (err) {
+		next(err as CallbackError);
 	}
 });
 
-export const Faculty = model<TFaculty>('Faculty', FacultySchema);
+AdminSchema.pre('save', async function (next) {
+	const admin = this as TAdmin;
+
+	try {
+		if (admin.password) {
+			const salt = await bcrypt.genSalt(Number(config.salt_rounds));
+			admin.password = await bcrypt.hash(admin.password, salt);
+		}
+		next();
+	} catch (err) {
+		next(err as Error);
+	}
+});
+
+export const Admin = model<TAdmin>('Admin', AdminSchema);

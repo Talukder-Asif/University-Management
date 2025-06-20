@@ -6,13 +6,19 @@ import { TUser } from './user.interface';
 import User from './user.model';
 import { StudentModel } from '../student/student.model';
 import { AcademicSemester } from '../AcademicSemester/academicSemester.model';
-import { generateFacultyID, generateStudentId } from './user.utils';
+import {
+	generateAdminID,
+	generateFacultyID,
+	generateStudentId,
+} from './user.utils';
 import AppError from '../../errors/AppError';
-import mongoose from 'mongoose';
+import mongoose, { startSession } from 'mongoose';
 import status from 'http-status';
 import { TFaculty } from '../faculty/faculty.interface';
 import { Faculty } from '../faculty/faculty.model';
 import { AcademicDepartment } from '../academicDepartment/academicDepartment.model';
+import { TAdmin } from '../admin/admin.interface';
+import { Admin } from '../admin/admin.model';
 
 const createStudentIntoDB = async (password: string, payload: TStudent) => {
 	// Create a user
@@ -126,7 +132,58 @@ const createFacultyIntoDB = async (password: string, payload: TFaculty) => {
 	}
 };
 
+const createAdminIntoDB = async (password: string, payload: TAdmin) => {
+	const userData: Partial<TUser> = {};
+	userData.password = password || (config.default_password as string);
+	userData.role = 'admin';
+	userData.email = payload.email;
+
+	// Checking the academic Department is exist
+	const isAcademicDepartmentAvailable = await AcademicDepartment.findById(
+		payload.managementDepartment,
+	);
+
+	if (!isAcademicDepartmentAvailable) {
+		throw new Error(`Academic Department is not Found`);
+	}
+
+	const session = await startSession();
+	try {
+		session.startTransaction();
+
+		const id = await generateAdminID();
+
+		userData.id = id;
+
+		const newUser = await User.create([userData], { session });
+
+		if (!newUser) {
+			throw new Error('user can not created, Something is wrong!');
+		}
+
+		payload.id = id;
+		payload.user = newUser[0]._id;
+		payload.password = password || (config.default_password as string);
+
+		const newAdmin = await Admin.create([payload], { session });
+
+		if (!newAdmin) {
+			throw new Error('Admin creation failed, Something is wrong');
+		}
+
+		await session.commitTransaction();
+		await session.endSession();
+
+		return newAdmin;
+	} catch (err) {
+		await session.abortTransaction();
+		await session.endSession();
+		throw new Error('Something is wrong');
+	}
+};
+
 export const UserService = {
 	createStudentIntoDB,
 	createFacultyIntoDB,
+	createAdminIntoDB,
 };
