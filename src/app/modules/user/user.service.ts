@@ -12,6 +12,7 @@ import mongoose from 'mongoose';
 import status from 'http-status';
 import { TFaculty } from '../faculty/faculty.interface';
 import { Faculty } from '../faculty/faculty.model';
+import { AcademicDepartment } from '../academicDepartment/academicDepartment.model';
 
 const createStudentIntoDB = async (password: string, payload: TStudent) => {
 	// Create a user
@@ -74,6 +75,23 @@ const createFacultyIntoDB = async (password: string, payload: TFaculty) => {
 	userData.password = password || (config.default_password as string);
 	userData.role = 'faculty';
 	userData.email = payload.email;
+
+	// Checking the academic Faculty and Department
+	const isAcademicDepartmentAvailable = await AcademicDepartment.findById(
+		payload.academicDepartment,
+	);
+
+	if (!isAcademicDepartmentAvailable) {
+		throw new Error(`Academic Department is not Found`);
+	}
+	if (
+		!(
+			isAcademicDepartmentAvailable.academicFaculty.toString() ===
+			payload?.academicFaculty.toString()
+		)
+	) {
+		throw new Error(`Academic Faculty is not Found`);
+	}
 
 	// Create a session for transaction
 	const session = await mongoose.startSession();

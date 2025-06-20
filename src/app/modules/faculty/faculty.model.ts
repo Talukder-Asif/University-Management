@@ -1,5 +1,6 @@
-import { model, Schema } from 'mongoose';
+import { CallbackError, model, Schema } from 'mongoose';
 import { TFaculty } from './faculty.interface';
+import AppError from '../../errors/AppError';
 
 const FacultySchema = new Schema<TFaculty>(
 	{
@@ -78,5 +79,30 @@ const FacultySchema = new Schema<TFaculty>(
 		timestamps: true,
 	},
 );
+
+// Middleware to show only available faculties
+FacultySchema.pre('find', function (next) {
+	this.find({ isDeleted: { $ne: true } });
+	next();
+});
+
+FacultySchema.pre('findOne', function (next) {
+	this.findOne({ isDeleted: { $ne: true } });
+	next();
+});
+FacultySchema.pre('findOneAndUpdate', async function (next) {
+	try {
+		const query = this.getQuery();
+
+		const student = await this.model.findOne(query);
+		if (!student) {
+			throw new AppError(404, 'Student does not exist');
+		}
+
+		next();
+	} catch (error) {
+		next(error as CallbackError);
+	}
+});
 
 export const Faculty = model<TFaculty>('Faculty', FacultySchema);
