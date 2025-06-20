@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import mongoose from 'mongoose';
 import { StudentModel } from './student.model';
 import AppError from '../../errors/AppError';
@@ -68,7 +70,7 @@ const getAllStudentsFromDB = async (query: Record<string, unknown>) => {
 		.filter()
 		.sort()
 		.paginate()
-		.fieldLimiting();
+		.fields();
 
 	const result = await studentQuery.modelQuery;
 
@@ -157,9 +159,10 @@ const deleteStudentFromDB = async (id: string) => {
 		await session.commitTransaction();
 		await session.endSession();
 		return deletedStudent;
-	} catch (err) {
+	} catch (err: any) {
 		await session.abortTransaction();
 		await session.endSession();
+		throw new Error(err);
 	}
 };
 

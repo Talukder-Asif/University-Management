@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose';
 import { TFaculty } from './faculty.interface';
 import { Faculty } from './faculty.model';
@@ -62,9 +63,9 @@ const deleteFacultyFromDB = async (id: string) => {
 		await session.commitTransaction();
 
 		return updateFaculty;
-	} catch {
+	} catch (err: any) {
 		await session.abortTransaction();
-		throw new Error('Something is wrong');
+		throw new Error(err);
 	} finally {
 		await session.endSession();
 	}
