@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 import { TFaculty } from './faculty.interface';
 import { Faculty } from './faculty.model';
 import User from '../user/user.model';
+import AppError from '../../errors/AppError';
+import status from 'http-status';
 
 const getAllFacultyFromDB = async () => {
 	const result = await Faculty.find({});
@@ -10,7 +12,7 @@ const getAllFacultyFromDB = async () => {
 };
 
 const getSingleFacultyFromDB = async (id: string) => {
-	const result = await Faculty.findOne({ id });
+	const result = await Faculty.findById(id);
 	return result;
 };
 
@@ -29,7 +31,7 @@ const updateSingleFacultyFromDB = async (
 		}
 	}
 
-	const result = await Faculty.findOneAndUpdate({ id }, modifiedUpdatedData, {
+	const result = await Faculty.findByIdAndUpdate(id, modifiedUpdatedData, {
 		new: true,
 		runValidators: true,
 	});
@@ -42,32 +44,38 @@ const deleteFacultyFromDB = async (id: string) => {
 
 	try {
 		session.startTransaction();
-		const updatedUser = await User.findOneAndUpdate(
-			{ id },
+
+		const deletedFaculty = await Faculty.findByIdAndUpdate(
+			id,
 			{ isDeleted: true },
 			{ new: true, session },
 		);
-		if (!updatedUser) {
-			throw new Error('User is not deleted');
+
+		if (!deletedFaculty) {
+			throw new AppError(status.BAD_REQUEST, 'Failed to delete faculty');
 		}
 
-		const updateFaculty = await Faculty.findOneAndUpdate(
-			{ id },
+		// get user _id from deletedFaculty
+		const userId = deletedFaculty.user;
+
+		const deletedUser = await User.findByIdAndUpdate(
+			userId,
 			{ isDeleted: true },
 			{ new: true, session },
 		);
-		if (!updateFaculty) {
-			throw new Error('User is not deleted');
+
+		if (!deletedUser) {
+			throw new AppError(status.BAD_REQUEST, 'Failed to delete user');
 		}
 
 		await session.commitTransaction();
+		await session.endSession();
 
-		return updateFaculty;
+		return deletedFaculty;
 	} catch (err: any) {
 		await session.abortTransaction();
-		throw new Error(err);
-	} finally {
 		await session.endSession();
+		throw new Error(err);
 	}
 };
 

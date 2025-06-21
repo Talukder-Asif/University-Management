@@ -7,10 +7,10 @@ const router = express.Router();
 
 router.get('/', FacultyController.getAllFaculty);
 router.get('/:id', FacultyController.getSingleFaculty);
-router.patch('/:id', FacultyController.updateSingleFaculty);
-router.delete(
+router.patch(
 	'/:id',
 	validateRequest(FacultyValidation.updateFacultyValidationSchema),
-	FacultyController.deleteFaculty,
+	FacultyController.updateSingleFaculty,
 );
+router.delete('/:id', FacultyController.deleteFaculty);
 export const FacultyRoutes = router;
