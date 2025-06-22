@@ -18,6 +18,7 @@ router.get('/:id', courseController.getSingleCourse);
 router.patch(
 	'/:id',
 	validateRequest(CourseValidations.updateCourseValidationSchema),
+	courseController.updateCourse,
 );
 
 router.delete('/:id', courseController.deleteCourse);
