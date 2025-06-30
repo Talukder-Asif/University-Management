@@ -47,16 +47,6 @@ const updateSemesterRegistration = catchAsync(async (req, res) => {
 	});
 });
 
-const deleteSemesterRegistration = catchAsync(async (req, res) => {
-	const result = 'ABC';
-
-	sendResponse(res, {
-		statusCode: status.OK,
-		success: true,
-		message: 'ABC',
-		data: result,
-	});
-});
 const getSingleSemesterRegistration = catchAsync(async (req, res) => {
 	const { id } = req.params;
 	const result =
@@ -66,6 +56,19 @@ const getSingleSemesterRegistration = catchAsync(async (req, res) => {
 		statusCode: status.OK,
 		success: true,
 		message: 'Semester Registration is retrieved successfully!',
+		data: result,
+	});
+});
+
+const deleteSemesterRegistration = catchAsync(async (req, res) => {
+	const { id } = req.params;
+	const result =
+		await semesterRegistrationService.deleteSemesterRegistrationFromDB(id);
+
+	sendResponse(res, {
+		statusCode: status.OK,
+		success: true,
+		message: 'Semester Registration is updated successfully',
 		data: result,
 	});
 });
