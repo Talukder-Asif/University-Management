@@ -6,16 +6,15 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import config from '../../config';
 import bcrypt from 'bcrypt';
 import { createToken } from './auth.utils';
+import { sendEmail } from '../../utils/sendEmail';
 
 const loginUser = async (payload: TLoginUsers) => {
 	// Using Local methods
-
 	// // Checking if the user exist on the database
 	// const isUserExists = await User.findOne({ id: payload?.id });
 	// if (!isUserExists) {
 	// 	throw new AppError(status.NOT_FOUND, 'This user is not Found');
 	// }
-
 	// Using Static Method
 
 	const user = await User.checkUserExistByCustomId(payload?.id);
@@ -173,8 +172,45 @@ const refreshToken = async (token: string) => {
 	};
 };
 
+const forgetPassword = async (userId: string) => {
+	// at first check if the user exist or not
+	const user = await User.checkUserExistByCustomId(userId);
+	if (!user) {
+		throw new AppError(status.NOT_FOUND, 'This user is not Found');
+	}
+
+	// Checking if the user is already deleted
+	if (user?.isDeleted) {
+		throw new AppError(status.FORBIDDEN, 'This user is Deleted');
+	}
+
+	// Checking if the user is  blocked
+	if (user?.status === 'blocked') {
+		throw new AppError(status.FORBIDDEN, 'This user is Blocked');
+	}
+
+	const jwtPayload = {
+		userId: user.id,
+		role: user.role,
+	};
+
+	// reset Token
+	const resetToken = createToken(
+		jwtPayload,
+		config.jwt_access_secret as string,
+		'10m',
+	);
+
+	const resetUILink = `http://localhost:3000?id=${user?._id}token=${resetToken}`;
+
+	sendEmail();
+
+	return null;
+};
+
 export const AuthServices = {
 	loginUser,
 	changePassword,
 	refreshToken,
+	forgetPassword,
 };
