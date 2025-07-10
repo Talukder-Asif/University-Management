@@ -197,7 +197,7 @@ const forgetPassword = async (userId: string) => {
 	// reset Token
 	const resetToken = createToken(
 		jwtPayload,
-		config.jwt_access_secret as string,
+		config.jwt_reset_password_token as string,
 		'10m',
 	);
 
@@ -273,9 +273,41 @@ const resetPassword = async (
 		throw new AppError(status.FORBIDDEN, 'This user is Blocked');
 	}
 
-	console.log(payload, token);
+	// Check the token is send from the client
+	if (!token) {
+		throw new AppError(status.UNAUTHORIZED, 'You are not authorized!');
+	}
 
-	return null;
+	// Check the token is valid
+	const decoded = jwt.verify(
+		token,
+		config.jwt_reset_password_token as string,
+	) as JwtPayload;
+
+	//check the request come from correct person
+	if (user.id !== decoded.userId) {
+		console.log(user.id, payload.id, decoded.userId);
+		throw new AppError(status.FORBIDDEN, 'You are forbidden!');
+	}
+
+	// Now convert new password to hashedPassword
+	const newHashedPassword = await bcrypt.hash(
+		payload.newPassword,
+		Number(config.salt_rounds),
+	);
+
+	await User.findOneAndUpdate(
+		{
+			id: decoded.userId,
+			role: decoded.role,
+		},
+		{
+			password: newHashedPassword,
+			passwordChangedDate: new Date(),
+		},
+	);
+
+	return;
 };
 
 export const AuthServices = {
