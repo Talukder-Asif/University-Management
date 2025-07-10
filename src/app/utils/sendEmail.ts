@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import config from '../config';
 
-export const sendEmail = async () => {
+export const sendEmail = async (to: string, html: string) => {
 	// Create a test account or replace with real credentials.
 	const transporter = nodemailer.createTransport({
 		host: 'smtp.gmail.com',
@@ -14,10 +14,10 @@ export const sendEmail = async () => {
 	});
 
 	await transporter.sendMail({
-		from: '',
-		to: 'bar@example.com, baz@example.com',
-		subject: 'Hello ✔',
-		text: 'Hello world?', // plain‑text body
-		html: '<b>Hello world?</b>', // HTML body
+		from: 'asif.talukder.aj.10@gmail.com',
+		to,
+		subject: 'Change the Password',
+		text: 'Reset your password within 10 minutes',
+		html,
 	});
 };
