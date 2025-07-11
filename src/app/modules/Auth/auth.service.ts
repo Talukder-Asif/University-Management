@@ -5,16 +5,10 @@ import User from '../user/user.model';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import config from '../../config';
 import bcrypt from 'bcrypt';
-import { createToken } from './auth.utils';
+import { createToken, verifyToken } from './auth.utils';
 import { sendEmail } from '../../utils/sendEmail';
 
 const loginUser = async (payload: TLoginUsers) => {
-	// Using Local methods
-	// // Checking if the user exist on the database
-	// const isUserExists = await User.findOne({ id: payload?.id });
-	// if (!isUserExists) {
-	// 	throw new AppError(status.NOT_FOUND, 'This user is not Found');
-	// }
 	// Using Static Method
 
 	const user = await User.checkUserExistByCustomId(payload?.id);
@@ -279,14 +273,10 @@ const resetPassword = async (
 	}
 
 	// Check the token is valid
-	const decoded = jwt.verify(
-		token,
-		config.jwt_reset_password_token as string,
-	) as JwtPayload;
+	const decoded = verifyToken(token, config.jwt_reset_password_token as string);
 
 	//check the request come from correct person
 	if (user.id !== decoded.userId) {
-		console.log(user.id, payload.id, decoded.userId);
 		throw new AppError(status.FORBIDDEN, 'You are forbidden!');
 	}
 
