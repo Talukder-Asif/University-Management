@@ -152,7 +152,11 @@ const createFacultyIntoDB = async (
 	}
 };
 
-const createAdminIntoDB = async (password: string, payload: TAdmin) => {
+const createAdminIntoDB = async (
+	password: string,
+	payload: TAdmin,
+	file: any,
+) => {
 	const userData: Partial<TUser> = {};
 	userData.password = password || (config.default_password as string);
 	userData.role = 'admin';
@@ -184,6 +188,13 @@ const createAdminIntoDB = async (password: string, payload: TAdmin) => {
 		payload.id = id;
 		payload.user = newUser[0]._id;
 		payload.password = password || (config.default_password as string);
+
+		const imageData = await sendImageToCloudinary(
+			payload.id + payload.name.firstName,
+			file,
+		);
+
+		payload.profileImage = imageData.secure_url;
 
 		const newAdmin = await Admin.create([payload], { session });
 

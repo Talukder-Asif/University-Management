@@ -42,7 +42,11 @@ const createFaculty = catchAsync(async (req, res) => {
 const createAdmin = catchAsync(async (req, res) => {
 	const { password, admin } = req.body;
 
-	const result = await UserService.createAdminIntoDB(password, admin);
+	const result = await UserService.createAdminIntoDB(
+		password,
+		admin,
+		req?.file,
+	);
 
 	sendResponse(res, {
 		statusCode: 200,
