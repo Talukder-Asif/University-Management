@@ -86,7 +86,11 @@ const createStudentIntoDB = async (
 	}
 };
 
-const createFacultyIntoDB = async (password: string, payload: TFaculty) => {
+const createFacultyIntoDB = async (
+	password: string,
+	payload: TFaculty,
+	file: any,
+) => {
 	const userData: Partial<TUser> = {};
 	userData.password = password || (config.default_password as string);
 	userData.role = 'faculty';
@@ -127,6 +131,12 @@ const createFacultyIntoDB = async (password: string, payload: TFaculty) => {
 
 		payload.user = newUser[0]?._id;
 		payload.id = newUser[0]?.id;
+
+		const imageData = await sendImageToCloudinary(
+			payload.id + payload.name.firstName,
+			file.path,
+		);
+		payload.profileImage = imageData.secure_url;
 
 		const newFaculty = await Faculty.create([payload], { session });
 		if (!newFaculty) {

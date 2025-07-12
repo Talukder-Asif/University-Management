@@ -73,13 +73,6 @@ const createFacultyValidationSchema = z.object({
 				invalid_type_error: 'Permanent address must be a string',
 			}),
 
-			profileImage: z
-				.string({
-					invalid_type_error: 'Profile image must be a URL string',
-				})
-				.url('Profile image must be a valid URL')
-				.optional(),
-
 			academicDepartment: z
 				.string({
 					required_error: 'Academic Department is required',
