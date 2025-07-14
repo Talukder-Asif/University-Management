@@ -1,26 +1,26 @@
-import { Types } from 'mongoose';
+import { z } from 'zod';
 
-export type TGrade = 'A' | 'B' | 'C' | 'D' | 'F' | 'NA';
+const createEnrolledCourseValidationZodSchema = z.object({
+	body: z.object({
+		offeredCourse: z.string(),
+	}),
+});
 
-export type TEnrolledCourseMarks = {
-	classTest1: number;
-	midTerm: number;
-	classTest2: number;
-	finalTerm: number;
-};
+const updateEnrolledCourseMarksValidationZodSchema = z.object({
+	body: z.object({
+		semesterRegistration: z.string(),
+		offeredCourse: z.string(),
+		student: z.string(),
+		courseMarks: z.object({
+			classTest1: z.number().optional(),
+			midTerm: z.number().optional(),
+			classTest2: z.number().optional(),
+			finalTerm: z.number().optional(),
+		}),
+	}),
+});
 
-export type TEnrolledCourse = {
-	semesterRegistration: Types.ObjectId;
-	academicSemester: Types.ObjectId;
-	academicFaculty: Types.ObjectId;
-	academicDepartment: Types.ObjectId;
-	offeredCourse: Types.ObjectId;
-	course: Types.ObjectId;
-	student: Types.ObjectId;
-	faculty: Types.ObjectId;
-	isEnrolled: boolean;
-	courseMarks: TEnrolledCourseMarks;
-	grade: TGrade;
-	gradePoints: number;
-	isCompleted: boolean;
+export const EnrolledCourseValidations = {
+	createEnrolledCourseValidationZodSchema,
+	updateEnrolledCourseMarksValidationZodSchema,
 };
