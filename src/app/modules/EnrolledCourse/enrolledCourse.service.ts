@@ -5,6 +5,8 @@ import { TEnrolledCourse } from './enrolledCourse.interface';
 import EnrolledCourse from './enrolledCourse.model';
 import { StudentModel } from '../student/student.model';
 import mongoose from 'mongoose';
+import { SemesterRegistration } from '../semesterRegistration/semesterRegistration.model';
+import { Course } from '../Course/course.model';
 
 const createEnrolledCourseIntoDB = async (
 	payload: TEnrolledCourse,
@@ -13,7 +15,7 @@ const createEnrolledCourseIntoDB = async (
 	/*
     step-1: Check if the offer course is exist
     step-2: Check if the student is already enrolled on the course 
-    step-3: check if the limit is not over
+    step-3: check if the maxCredit is not over
     step-n: Create an enrolledCourse 
     */
 
@@ -25,7 +27,9 @@ const createEnrolledCourseIntoDB = async (
 		throw new AppError(status.BAD_REQUEST, 'Offered Course not found');
 	}
 
-	const student = await StudentModel.findOne({ id: userId }).select('_id');
+	const course = await Course.findById(isOfferedCourseExist.course);
+
+	const student = await StudentModel.findOne({ id: userId }, { _id: 1 });
 
 	if (!student) {
 		throw new AppError(status.BAD_REQUEST, 'Student not found');
@@ -45,6 +49,60 @@ const createEnrolledCourseIntoDB = async (
 		throw new AppError(status.BAD_GATEWAY, 'Room is full!');
 	}
 	const session = await mongoose.startSession();
+
+	// Check total credits don't cross the max credit limits
+	const semesterRegistration = await SemesterRegistration.findById(
+		isOfferedCourseExist.semesterRegistration,
+		{ maxCredit: 1 },
+	);
+
+	// to do this -> use aggregate and find the sum of total courses
+	const enrolledCredits = await EnrolledCourse.aggregate([
+		{
+			$match: {
+				semesterRegistration: isOfferedCourseExist.semesterRegistration,
+				student: student._id,
+			},
+		},
+		{
+			$lookup: {
+				from: 'courses',
+				localField: 'course',
+				foreignField: '_id',
+				as: 'enrolledCourseData',
+			},
+		},
+		{
+			$unwind: 'enrolledCourseData',
+		},
+		{
+			$group: {
+				_id: null,
+				totalEnrolledCredits: { $sum: '$enrolledCourseData.credits' },
+			},
+		},
+		{
+			$project: {
+				_id: 0,
+				totalEnrolledCredits: 1,
+			},
+		},
+	]);
+	//to do this -> total enrolled Credits + new enrolled Course Credits > maxCredit
+
+	const totalCredits =
+		enrolledCredits.length > 0 ? enrolledCredits[0].totalEnrolledCredits : 0;
+
+	if (
+		totalCredits &&
+		semesterRegistration?.maxCredit &&
+		totalCredits + course?.credits > semesterRegistration?.maxCredit
+	) {
+		throw new AppError(
+			status.BAD_REQUEST,
+			'You have exceeded maximum number of credits...',
+		);
+	}
 
 	try {
 		session.startTransaction();
