@@ -8,7 +8,7 @@ export interface TUser {
 	email: string;
 	needsChangePassword: boolean;
 	passwordChangedDate?: Date;
-	role: 'super-admin' | 'admin' | 'student' | 'faculty';
+	role: 'superAdmin' | 'admin' | 'student' | 'faculty';
 	isDeleted: boolean;
 	status: 'in-progress' | 'blocked';
 }

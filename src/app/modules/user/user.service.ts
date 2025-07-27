@@ -65,7 +65,7 @@ const createStudentIntoDB = async (
 
 		const imageName = payload.id + payload.name.firstName;
 		//send Image To Cloudinary
-		const uploadData = await sendImageToCloudinary(imageName, file.path);
+		const uploadData = await sendImageToCloudinary(imageName, file?.path);
 		payload.profileImg = uploadData.secure_url;
 
 		// Create a student model(Transection 2)
