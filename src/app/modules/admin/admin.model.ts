@@ -69,6 +69,7 @@ const AdminSchema = new Schema<TAdmin>(
 		},
 		profileImage: {
 			type: String,
+			default: '',
 		},
 		managementDepartment: {
 			type: Schema.Types.ObjectId,

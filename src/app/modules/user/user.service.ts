@@ -41,8 +41,18 @@ const createStudentIntoDB = async (
 	);
 
 	if (!admissionSemester) {
-		throw new AppError(404, 'Invalid semester ID provided');
+		throw new AppError(404, 'Invalid admission semester provided');
 	}
+
+	const academicDepartment = await AcademicDepartment.findById(
+		payload.academicDepartment,
+	);
+
+	if (!academicDepartment) {
+		throw new AppError(404, 'Invalid academic department provided');
+	}
+
+	payload.academicFaculty = academicDepartment?.academicFaculty;
 
 	// Create a session for transaction
 	const session = await mongoose.startSession();
@@ -63,10 +73,12 @@ const createStudentIntoDB = async (
 		payload.id = newUser[0].id;
 		payload.user = newUser[0]._id;
 
-		const imageName = payload.id + payload.name.firstName;
-		//send Image To Cloudinary
-		const uploadData = await sendImageToCloudinary(imageName, file?.path);
-		payload.profileImg = uploadData.secure_url;
+		if (file) {
+			const imageName = payload.id + payload.name.firstName;
+			//send Image To Cloudinary
+			const uploadData = await sendImageToCloudinary(imageName, file?.path);
+			payload.profileImg = uploadData.secure_url;
+		}
 
 		// Create a student model(Transection 2)
 		const newStudent = await StudentModel.create([payload], { session });
@@ -132,11 +144,13 @@ const createFacultyIntoDB = async (
 		payload.user = newUser[0]?._id;
 		payload.id = newUser[0]?.id;
 
-		const imageData = await sendImageToCloudinary(
-			payload.id + payload.name.firstName,
-			file.path,
-		);
-		payload.profileImage = imageData.secure_url;
+		if (file) {
+			const imageData = await sendImageToCloudinary(
+				payload.id + payload.name.firstName,
+				file.path,
+			);
+			payload.profileImage = imageData.secure_url;
+		}
 
 		const newFaculty = await Faculty.create([payload], { session });
 		if (!newFaculty) {
@@ -189,12 +203,14 @@ const createAdminIntoDB = async (
 		payload.user = newUser[0]._id;
 		payload.password = password || (config.default_password as string);
 
-		const imageData = await sendImageToCloudinary(
-			payload.id + payload.name.firstName,
-			file,
-		);
+		if (file) {
+			const imageData = await sendImageToCloudinary(
+				payload.id + payload.name.firstName,
+				file,
+			);
 
-		payload.profileImage = imageData.secure_url;
+			payload.profileImage = imageData.secure_url;
+		}
 
 		const newAdmin = await Admin.create([payload], { session });
 
