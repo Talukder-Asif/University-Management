@@ -116,14 +116,8 @@ const createFacultyIntoDB = async (
 	if (!isAcademicDepartmentAvailable) {
 		throw new Error(`Academic Department is not Found`);
 	}
-	if (
-		!(
-			isAcademicDepartmentAvailable.academicFaculty.toString() ===
-			payload?.academicFaculty.toString()
-		)
-	) {
-		throw new Error(`Academic Faculty is not Found`);
-	}
+
+	payload.academicFaculty = isAcademicDepartmentAvailable.academicFaculty;
 
 	// Create a session for transaction
 	const session = await mongoose.startSession();

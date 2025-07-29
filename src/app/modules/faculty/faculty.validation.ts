@@ -80,13 +80,6 @@ const createFacultyValidationSchema = z.object({
 				})
 				.min(1, 'Academic Department must be at least 1 character long'),
 
-			academicFaculty: z
-				.string({
-					required_error: 'Academic Faculty is required',
-					invalid_type_error: 'Academic Faculty must be a string',
-				})
-				.min(1, 'Academic Faculty must be at least 1 character long'),
-
 			isDeleted: z.boolean().optional(),
 		}),
 	}),
@@ -182,27 +175,12 @@ const updateFacultyValidationSchema = z.object({
 				})
 				.optional(),
 
-			profileImage: z
-				.string({
-					invalid_type_error: 'Profile image must be a URL string',
-				})
-				.url('Profile image must be a valid URL')
-				.optional(),
-
 			academicDepartment: z
 				.string({
 					required_error: 'Academic Department is required',
 					invalid_type_error: 'Academic Department must be a string',
 				})
 				.min(1, 'Academic Department must be at least 1 character long')
-				.optional(),
-
-			academicFaculty: z
-				.string({
-					required_error: 'Academic Faculty is required',
-					invalid_type_error: 'Academic Faculty must be a string',
-				})
-				.min(1, 'Academic Faculty must be at least 1 character long')
 				.optional(),
 
 			isDeleted: z.boolean().optional(),
