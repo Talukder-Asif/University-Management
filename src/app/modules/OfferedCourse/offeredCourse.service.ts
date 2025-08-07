@@ -1,3 +1,4 @@
+import { StudentModel } from './../student/student.model';
 import status from 'http-status';
 import AppError from '../../errors/AppError';
 import { SemesterRegistration } from '../semesterRegistration/semesterRegistration.model';
@@ -136,6 +137,51 @@ const getAllOfferedCourseFromDB = async (query: Record<string, unknown>) => {
 		.fields();
 
 	const result = await offeredCourseQuery.modelQuery;
+	const meta = await offeredCourseQuery.countTotal();
+	return { meta, result };
+};
+
+const getMyOfferedCoursesFromDB = async (userId: string) => {
+	const student = await StudentModel.findOne({ id: userId });
+
+	if (!student) {
+		throw new AppError(404, 'Student not found');
+	}
+	if (student.isDeleted) {
+		throw new AppError(404, 'Student is deleted');
+	}
+
+	// Find ongoing semester
+	const currentOngoingRegistrationSemester = await SemesterRegistration.findOne(
+		{
+			status: 'ONGOING',
+		},
+	);
+	if (!currentOngoingRegistrationSemester) {
+		throw new AppError(
+			status.NOT_FOUND,
+			'There is no ongoing semester registration',
+		);
+	}
+
+	const result = await OfferedCourse.aggregate([
+		{
+			$match: {
+				semesterRegistration: currentOngoingRegistrationSemester._id,
+				academicDepartment: student.academicDepartment,
+				academicFaculty: student.academicFaculty,
+			},
+		},
+		{
+			$lookup: {
+				from: 'courses',
+				localField: 'course',
+				foreignField: '_id',
+				as: 'course',
+			},
+		},
+	]);
+
 	return result;
 };
 
@@ -246,6 +292,7 @@ const deleteOfferedCourseFromDB = async (id: string) => {
 export const offeredCourseServices = {
 	createOfferedCourseIntoDB,
 	getAllOfferedCourseFromDB,
+	getMyOfferedCoursesFromDB,
 	getSingleOfferedCourseFromDB,
 	updateOfferedCourseIntoDB,
 	deleteOfferedCourseFromDB,

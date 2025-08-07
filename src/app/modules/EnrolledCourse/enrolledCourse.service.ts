@@ -75,7 +75,7 @@ const createEnrolledCourseIntoDB = async (
 			},
 		},
 		{
-			$unwind: 'enrolledCourseData',
+			$unwind: '$enrolledCourseData',
 		},
 		{
 			$group: {

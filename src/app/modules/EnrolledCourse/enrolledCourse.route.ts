@@ -8,7 +8,7 @@ import { USER_ROLE } from '../user/user.constant';
 const router = express.Router();
 
 router.post(
-	'/create',
+	'/create-enroll',
 	auth(USER_ROLE.student),
 	validateRequest(
 		EnrolledCourseValidations.createEnrolledCourseValidationZodSchema,
@@ -18,7 +18,7 @@ router.post(
 
 router.patch(
 	'/update-enrolled-course-marks',
-	auth(USER_ROLE.faculty),
+	auth(USER_ROLE.faculty, USER_ROLE.admin, USER_ROLE.superAdmin),
 	validateRequest(
 		EnrolledCourseValidations.updateEnrolledCourseMarksValidationZodSchema,
 	),
