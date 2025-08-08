@@ -29,7 +29,8 @@ const getMyEnrolledCourses = catchAsync(async (req, res) => {
 		statusCode: status.CREATED,
 		success: true,
 		message: 'Enrolled Courses are retrieved successfully',
-		data: result,
+		meta: result?.meta || '',
+		data: result?.result,
 	});
 });
 
