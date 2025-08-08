@@ -10,7 +10,10 @@ import QueryBuilder from '../../builder/QueryBuilder';
 import { studentSearchableFields } from './student.constant';
 
 const getAllStudentsFromDB = async (query: Record<string, unknown>) => {
-	const studentQuery = new QueryBuilder(StudentModel.find(), query)
+	const studentQuery = new QueryBuilder(
+		StudentModel.find().populate('academicDepartment academicFaculty'),
+		query,
+	)
 		.search(studentSearchableFields)
 		.filter()
 		.sort()
